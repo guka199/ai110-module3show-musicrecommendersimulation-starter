@@ -6,16 +6,23 @@
 
 ---
 
-## 2. Intended Use
+## 2. Intended Use and Non-Intended Use
 
-VibeFinder suggests up to five songs from a small hand-curated catalog based on a user's
-stated genre, mood, energy level, valence (positiveness), and tempo preference. It is built
-for classroom exploration of how recommender systems work — not for production use or real
-listeners.
+**Intended use:** VibeFinder is a classroom simulation built to teach how content-based
+recommender systems work. It suggests up to five songs from a small hand-curated catalog
+based on explicit user preferences (genre, mood, energy level, valence, and tempo). The
+goal is transparency — every score is explainable in plain English — not accuracy at scale.
 
-It assumes the user can describe their taste with explicit preferences (e.g., "I want chill
-lofi at energy 0.38"). Real-world systems infer these from listening history; this simulation
-skips that step on purpose to keep the logic transparent.
+**Non-intended use:** VibeFinder should **not** be used as a production music service, a
+tool for making decisions about which artists to promote, or as any kind of content
+moderation system. It has a catalog of 18 songs, no knowledge of lyrics or cultural
+context, no fairness auditing, and no way to handle user data responsibly. Deploying it
+in any real product context would be misleading and potentially harmful to users who expect
+the depth of a professional recommendation engine.
+
+It also should not be used to infer anything about a real person's identity, mood, or
+mental state from their music preferences — the "mood" labels in this catalog describe
+the sound of a song, not the emotional state of the listener.
 
 ---
 
@@ -126,13 +133,49 @@ differentiator than genre when the weights allow it.
 
 ## 9. Personal Reflection
 
-Building VibeFinder made the invisible visible: real recommenders run the same basic loop
-(score every item, sort, slice) but at the scale of 100 million songs with dozens of
-features instead of 18 songs and five. The math is not magic — it is multiplication and
-subtraction.
+**Biggest learning moment**
 
-The most surprising moment was the "Conflicted Raver" profile. I expected the sad mood
-preference to pull blues or synthwave to the top, but the system picked EDM because it saw
-genre+energy and declared victory. That result is technically correct by the rules I wrote,
-but it feels wrong — and that gap between "correct by the formula" and "right for the human"
-is exactly where real recommender teams spend most of their time tuning.
+The "Conflicted Raver" edge case was the clearest lesson of the whole project. I set up a
+profile with high-energy EDM preferences but a "melancholy" mood — two preferences that
+pull in opposite directions. I expected the system to compromise and surface something moody
+but energetic (maybe synthwave). Instead it picked Ultraviolet Drop (EDM/euphoric) because
+genre and energy together outweighed the mood signal. That result is *correct by the rules
+I wrote* — but it feels wrong. That gap, between "right by the formula" and "right for the
+human," was the moment the whole concept of AI alignment clicked for me in a concrete way.
+Weight choices are not neutral engineering decisions; they encode a value judgment about what
+matters most to a listener.
+
+**How AI tools helped — and when I had to double-check**
+
+AI tools (Copilot / Claude) were most useful for boilerplate: writing the CSV loader, the
+dataclass definitions, the sorted() vs .sort() comparison. These are tasks where the code
+is predictable and the risk of a subtle bug is low. Where I had to slow down and verify was
+the scoring logic itself. The AI suggested a proximity formula that used `abs(song - user)`
+which was correct, but it initially forgot to multiply the result by a weight — so all five
+features were treated equally, defeating the whole purpose of the weighted design. The lesson:
+AI tools draft, humans decide. Every weight choice and formula needed a sanity-check against
+a known song (e.g., "Sunrise City is the best pop/happy match; does it actually score
+highest?") before I trusted the output.
+
+**What surprised me about how simple algorithms still "feel" like recommendations**
+
+I expected 18 songs and five math operations to produce obviously mechanical results. What
+surprised me was how *plausible* the outputs felt for well-defined profiles. When I ran the
+"Chill Lofi Studier" profile, the system returned Library Rain and Midnight Coding at the
+top — exactly what a thoughtful human DJ would pick. The reason it *feels* like intelligent
+curation is that the features (energy, valence, tempo) genuinely capture the dimensions
+listeners use to describe their taste, even if they never use those words. The algorithm
+is not thinking; it is just measuring the same things a human measures, more precisely.
+That made me realize that a lot of "AI magic" in products is the same arithmetic — the
+sophistication is in choosing the right features and the right weights, not in the math itself.
+
+**What I would try next**
+
+If I continued this project, the first change would be replacing the binary genre bonus with
+a genre similarity graph — so "indie pop" and "pop" share partial credit, and "ambient" and
+"lofi" are neighbors. The second would be adding implicit feedback: a simple skip counter
+that adjusts the user's target energy downward each time a high-energy track is skipped.
+That single change would turn VibeFinder from a static form into something that actually
+learns. The third would be a diversity rule at the ranking step — no two songs from the
+same artist in the top five — because right now a catalog dominated by one artist would let
+them sweep all five slots, which is a real fairness problem in production recommenders.

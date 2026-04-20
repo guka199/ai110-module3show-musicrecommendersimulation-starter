@@ -252,14 +252,25 @@ You will go deeper on this in your model card.
 
 ## Reflection
 
-Read and complete `model_card.md`:
+[**Full Model Card →**](model_card.md)
 
-[**Model Card**](model_card.md)
+Building VibeFinder made clear that recommender systems are not mysterious — they are
+weighted scorecards applied at scale. The surprising part was how *plausible* the outputs
+felt for well-formed profiles, not because the math is clever, but because the chosen
+features (energy, valence, mood) genuinely capture the same dimensions listeners use to
+describe their taste. A chill lofi listener and a high-energy pop listener use completely
+different words to ask for music, but both can be served by the same five-number formula
+once you measure the right things.
 
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
+Bias showed up in two concrete ways. First, genre count imbalance: pop and lofi have
+3 catalog entries each while classical, metal, and blues have only 1 — so niche users have
+structurally fewer chances to earn the genre bonus, and the system is simply worse at
+serving them. Second, the flat genre bonus (+2.0) can override a much better emotional
+match in a different genre, which is how the "Conflicted Raver" profile ended up with a
+euphoric EDM track instead of the one melancholy song it was actually asking for. Both of
+these patterns exist in real production systems at larger scale — the lesson is that the
+data you train on and the weights you choose always reflect someone's priorities, even when
+the math looks neutral.
 
 
 ---
